@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <wait.h>
 
 // IPC functino
 #include <sys/types.h>
@@ -39,11 +40,14 @@ int main(void){
 	pid_t pid;
 
 
+	// SIGUSR1 for sync between child with parent
 	signal(SIGUSR1, mysyncHandler);
 
 	// step 0. ftok()
 	
 	// step 1. shmget()
+	// args are a key, size of structure and numboer of structure, perm | flag
+	// return is shmid
 	shmid = shmget((key_t)1234, sizeof(struct my_stu) * NUM_OF_STU, 0666 | IPC_CREAT);
 	if(shmid == -1){
 		fprintf(stderr, "shmget failed : %d\n", errno);
@@ -51,19 +55,27 @@ int main(void){
 	}
 
 	// step 2. shmat()
+	// args : shmid, addr which you want to get, flag
+	// return : address which is allocated
 	shmmem = shmat(shmid, (void *)0, SHM_RND);
 
+	// type conversion void * to struct *
 	stu = (struct my_stu *)shmmem;
 
 	// step 3. memory access
 
+	// child is receive process and parent is send process
 	pid = fork();
 
 	switch(pid){
+	// failed
 	case -1 : 
 		fprintf(stderr, "fork() error : %d\n", errno);
 		exit(EXIT_FAILURE);
+	// child process
 	case 0 : 
+		// if my_sync == 0, then keep going.
+		// when parent give a signal SIGUSR1 to child, my_sync becomes 0
 		while(!my_sync);
 		for(int i=0; i < NUM_OF_STU; i++){
 			stu[i].total = stu[i].kor + stu[i].eng + stu[i].math;
@@ -101,6 +113,7 @@ int main(void){
 			while(getchar() != '\n');
 		}	
 		kill(pid, SIGUSR1);
+		wait(0);
 		exit(EXIT_SUCCESS);
 	}
 }
