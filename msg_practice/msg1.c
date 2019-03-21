@@ -4,8 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include <sys/types.h>
-#include <sys/ipc.h>
+#include <sys/types.h> #include <sys/ipc.h>
 #include <sys/msg.h>
 
 struct my_msg_st{
@@ -27,7 +26,7 @@ int main(void){
 		exit(EXIT_FAILURE);
 	}
 
-	if(msgctl(msgid, IPC_STAT, &msqstat) == 1){
+	if(msgctl(msgid, IPC_STAT, &msqstat) == -1){
 		perror("msgclt() fail");
 	}
 
@@ -46,4 +45,9 @@ int main(void){
 			running = 1;
 		}
 	}
+	if(msgctl(msgid, IPC_RMID, 0) == -1){
+		fprintf(stderr, "Fail : msgctl() IPC_RMID : %d\n", errno);
+		exit(EXIT_FAILURE);
+	}
+	exit(EXIT_SUCCESS);
 }
