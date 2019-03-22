@@ -16,6 +16,7 @@
 int main(void){
 	int msqid;
 	struct my_msg stu[NUM_OF_STU];
+	struct msqid_ds msqstat;
 	int running = 1;	
 	int num_stu = 0;
 	
@@ -30,7 +31,7 @@ int main(void){
 
 	// step 2. msgsnd() / msgrcv()
 	while(running){
-		if(msgrcv(msqid, &stu[num_stu], sizeof(stu[num_stu]) - sizeof(int) - sizeof(double), 0, 0) == -1){
+		if(msgrcv(msqid, &stu[num_stu], sizeof(stu[num_stu]) - sizeof(int) - sizeof(double) - sizeof(long), 0, 0) == -1){
 			fprintf(stderr, "msgrcv failed : %d\n", errno);
 			exit(EXIT_FAILURE);
 		}
@@ -45,6 +46,13 @@ int main(void){
 			printf("name : %sid : %d\tkor : %d\teng : %d\tmath : %d\ttotal : %d\tavg : %lf\n", stu[num_stu].name, stu[num_stu].id, stu[num_stu].kor, stu[num_stu].eng, stu[num_stu].math, stu[num_stu].total, stu[num_stu].avg);
 			num_stu++;	
 		}
+
+		if(msgctl(msqid, IPC_STAT, &msqstat) == -1){
+			fprintf(stderr, "msgctl() failed : %d\n", errno);
+			exit(EXIT_FAILURE);
+		}
+		if(msqstat.msg_qnum > 0)
+			running = 1;
 	}
 	// step 3. msgctl()
 	if(msgctl(msqid, IPC_RMID, 0) == -1){

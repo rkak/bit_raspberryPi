@@ -49,7 +49,7 @@ int main(void){
 			while(getchar() != '\n');
 		}
 
-		if(msgsnd(msqid, &stu[num_stu], sizeof(stu[num_stu]), 0) == -1){
+		if(msgsnd(msqid, &stu[num_stu], sizeof(stu[num_stu]) - sizeof(long), 0) == -1){
 			fprintf(stderr, "msgsnd failed : %d\n", errno);
 			exit(EXIT_FAILURE);
 		}
